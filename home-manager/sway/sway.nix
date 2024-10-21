@@ -242,6 +242,12 @@ in {
           };
         }
         {
+          command = "floating enable";
+          criteria = {
+            workspace = "6";
+          };
+        }
+        {
           command = "move to workspace 1; workspace 1";
           criteria = {
             class = "VSCod.*";
