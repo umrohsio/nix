@@ -49,12 +49,6 @@
       process_children_only = true;
       recursive = true;
     };
-    datasets."backup1" = {
-      # Prune local backups
-      useTemplate = ["backup"];
-      process_children_only = true;
-      recursive = true;
-    };
     datasets."downloadpool" = {
       useTemplate = ["downloads"];
       process_children_only = true;
@@ -88,7 +82,6 @@
 
   ### Syncoid
   ## `backup` pool (for all data except `downloads`)
-  ## `backup1` pool is external SSD (for all data except `downloads`)
   services.syncoid = {
     enable = true;
     commonArgs = [
@@ -106,21 +99,7 @@
       source = "rpool/data";
       target = "backup";
       service = {
-        after = ["syncoid-backup1-data.service"];
-        wants = ["syncoid-backup1-data.service"];
-      };
-      recursive = true;
-      extraArgs = [
-        "--skip-parent"
-      ];
-    };
-    commands.backup1-data = {
-      source = "rpool/data";
-      target = "backup1";
-      service = {
-        before = ["syncoid-backup-data.service"];
-        after = ["syncoid-backup-var-lib.service"];
-        wants = ["syncoid-backup-var-lib.service"];
+        before = ["syncoid-backup-var-lib.service"];
       };
       recursive = true;
       extraArgs = [
@@ -131,20 +110,8 @@
       source = "rpool/nixos/var/lib";
       target = "backup/var_lib";
       service = {
-        after = ["syncoid-backup1-var-lib.service"];
-        wants = ["syncoid-backup1-var-lib.service"];
-        before = ["syncoid-backup1-data.service"];
-      };
-      recursive = false;
-      extraArgs = [
-        "--skip-parent"
-      ];
-    };
-    commands.backup1-var-lib = {
-      source = "rpool/nixos/var/lib";
-      target = "backup1/var_lib";
-      service = {
-        before = ["syncoid-backup-var-lib.service"];
+        after = ["syncoid-backup-data.service"];
+        wants = ["syncoid-backup-data.service"];
       };
       recursive = false;
       extraArgs = [
@@ -157,6 +124,8 @@
   sops.secrets.restic_env = {};
   sops.secrets.restic_repo = {};
   sops.secrets.restic_password = {};
+  sops.secrets.restic_local_repo = {};
+  sops.secrets.restic_local_password = {};
 
   services.restic = {
     backups.homeserver = {
@@ -164,6 +133,38 @@
       environmentFile = "${config.sops.secrets.restic_env.path}";
       repositoryFile =  "${config.sops.secrets.restic_repo.path}";
       passwordFile =  "${config.sops.secrets.restic_password.path}";
+      paths = [
+        "/home"
+        "/mnt/media"
+        "/srv"
+        "/var/backups"
+        "/var/lib"
+      ];
+      exclude = [
+        "/var/lib/containers/*"
+        "!/var/lib/containers/storage"
+        "/var/lib/containers/storage/*"
+        "!/var/lib/containers/storage/volumes"
+      ];
+      timerConfig = {
+        OnBootSec = "15m";
+        OnCalendar = "daily";
+        Persistent = true;
+      };
+      pruneOpts = [
+        "--keep-monthly 6"
+        "--keep-weekly 12"
+        "--keep-daily 30"
+      ];
+      extraBackupArgs = [
+        "--retry-lock 30m"
+      ];
+    };
+    backups.local = {
+      user = "root";
+      environmentFile = "${config.sops.secrets.restic_env.path}";
+      repositoryFile =  "${config.sops.secrets.restic_local_repo.path}";
+      passwordFile =  "${config.sops.secrets.restic_local_password.path}";
       paths = [
         "/home"
         "/mnt/media"

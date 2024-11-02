@@ -154,6 +154,11 @@ in {
         fsType = "zfs";
         options = ["X-mount.mkdir"];
       };
+      "/mnt/restic" = {
+        device = "/dev/disk/by-label/RESTIC";
+        fsType = "exfat";
+        options = ["X-mount.mkdir"];
+      };
     }
     // (builtins.listToAttrs (map (diskName: {
         name = zfsRoot.mirroredEfi + diskName + zfsRoot.partitionScheme.efiBoot;
@@ -183,7 +188,7 @@ in {
 
   boot.supportedFilesystems = ["zfs"];
   boot.loader.efi.efiSysMountPoint = with builtins; (zfsRoot.mirroredEfi + (head zfsRoot.bootDevices) + zfsRoot.partitionScheme.efiBoot);
-  boot.zfs.extraPools = ["backup" "backup1"];
+  boot.zfs.extraPools = ["backup"];
   boot.zfs.devNodes = zfsRoot.devNodes;
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.generationsDir.copyKernels = true;
