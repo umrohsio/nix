@@ -159,6 +159,10 @@
       extraBackupArgs = [
         "--retry-lock 30m"
       ];
+      checkOpts = [
+        "--with-cache"
+        "--read-data-subset=1%"
+      ];
     };
     backups.local = {
       user = "root";
@@ -191,7 +195,10 @@
       extraBackupArgs = [
         "--retry-lock 30m"
       ];
+      checkOpts = [
+        "--with-cache"
+        "--read-data-subset=1%"
+      ];
     };
   };
-
 }
